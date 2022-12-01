@@ -12,7 +12,6 @@ import { PaginationProps } from 'antd/lib/pagination'
 import { TableProps, ColumnProps } from 'antd/lib/table'
 import { SelectProps } from 'antd/lib/select'
 import cls from 'classnames'
-import { SortableContainer, SortableElement } from 'react-sortable-hoc'
 import { GeneralField, FieldDisplayTypes, ArrayField } from '@formily/core'
 import {
   useField,
@@ -23,7 +22,11 @@ import {
 } from '@formily/react'
 import { isArr, isBool, isFn } from '@formily/shared'
 import { Schema } from '@formily/json-schema'
-import { usePrefixCls } from '../__builtins__'
+import {
+  SortableContainer,
+  SortableElement,
+  usePrefixCls,
+} from '../__builtins__'
 import { ArrayBase, ArrayBaseMixins } from '../array-base'
 
 interface ObservableColumnSource {
@@ -56,8 +59,8 @@ interface PaginationAction {
   changePage?: (page: number) => void
 }
 
-const SortableRow = SortableElement((props: any) => <tr {...props} />)
-const SortableBody = SortableContainer((props: any) => <tbody {...props} />)
+const SortableRow = SortableElement((props) => <tr {...props} />)
+const SortableBody = SortableContainer((props) => <tbody {...props} />)
 
 const isColumnComponent = (schema: Schema) => {
   return schema['x-component']?.indexOf('Column') > -1
@@ -285,8 +288,18 @@ const ArrayTablePagination: ReactFC<IArrayTablePaginationProps> = (props) => {
   )
 }
 
-const RowComp = (props: any) => {
-  return <SortableRow index={props['data-row-key'] || 0} {...props} />
+const RowComp: ReactFC<React.HTMLAttributes<HTMLTableRowElement>> = (props) => {
+  const prefixCls = usePrefixCls('formily-array-table')
+
+  const index = props['data-row-key'] || 0
+
+  return (
+    <SortableRow
+      {...props}
+      index={index}
+      className={cls(props.className, `${prefixCls}-row-${index + 1}`)}
+    />
+  )
 }
 
 export const ArrayTable: ComposedArrayTable = observer(
@@ -302,10 +315,11 @@ export const ArrayTable: ComposedArrayTable = observer(
     const defaultRowKey = (record: any) => {
       return dataSource.indexOf(record)
     }
-    const addTdStyles = (node: HTMLElement) => {
-      const helper = document.body.querySelector(`.${prefixCls}-sort-helper`)
+    const addTdStyles = (id: number) => {
+      const node = ref.current?.querySelector(`.${prefixCls}-row-${id}`)
+      const helper = ref.current?.querySelector(`.${prefixCls}-sort-helper`)
       if (helper) {
-        const tds = node.querySelectorAll('td')
+        const tds = node?.querySelectorAll('td')
         requestAnimationFrame(() => {
           helper.querySelectorAll('td').forEach((td, index) => {
             if (tds[index]) {
@@ -316,23 +330,26 @@ export const ArrayTable: ComposedArrayTable = observer(
       }
     }
     const WrapperComp = useCallback(
-      (props: any) => (
-        <SortableBody
-          useDragHandle
-          lockAxis="y"
-          helperClass={`${prefixCls}-sort-helper`}
-          helperContainer={() => {
-            return ref.current?.querySelector('tbody')
-          }}
-          onSortStart={({ node }) => {
-            addTdStyles(node as HTMLElement)
-          }}
-          onSortEnd={({ oldIndex, newIndex }) => {
-            field.move(oldIndex, newIndex)
-          }}
-          {...props}
-        />
-      ),
+      (props: React.HTMLAttributes<HTMLTableSectionElement>) => {
+        const list = Array.isArray(field.value) ? field.value.slice() : []
+        return (
+          <SortableBody
+            {...props}
+            accessibility={{
+              container: ref.current || undefined,
+            }}
+            list={list}
+            onSortStart={(event) => {
+              addTdStyles(event.active.id as number)
+            }}
+            onSortEnd={(event) => {
+              const { oldIndex, newIndex } = event
+              field.move(oldIndex, newIndex)
+            }}
+            className={cls(`${prefixCls}-sort-helper`, props.className)}
+          />
+        )
+      },
       [field]
     )
     return (

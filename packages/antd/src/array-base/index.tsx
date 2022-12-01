@@ -20,8 +20,7 @@ import {
   RecordsScope,
 } from '@formily/react'
 import { isValid, clone } from '@formily/shared'
-import { SortableHandle } from 'react-sortable-hoc'
-import { usePrefixCls } from '../__builtins__'
+import { SortableHandle, usePrefixCls } from '../__builtins__'
 import cls from 'classnames'
 
 export interface IArrayBaseAdditionProps extends ButtonProps {
@@ -137,7 +136,7 @@ ArrayBase.Item = ({ children, ...props }) => {
   )
 }
 
-const SortHandle = SortableHandle((props: any) => {
+const SortHandle = SortableHandle((props) => {
   const prefixCls = usePrefixCls('formily-array-base')
   return (
     <MenuOutlined
@@ -146,7 +145,7 @@ const SortHandle = SortableHandle((props: any) => {
       style={{ ...props.style }}
     />
   )
-}) as any
+})
 
 ArrayBase.SortHandle = (props) => {
   const array = useArray()
