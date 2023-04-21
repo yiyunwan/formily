@@ -52,7 +52,7 @@
     "@formily/shared": "2.2.22",
     "@formily/validator": "2.2.22",
     "fs-extra": "^10.0.0",
-    "vue-demi": "^0.13.6",
+    "vue-demi": "^0.14.0",
     "vue-frag": "^1.1.4"
   },
   "peerDependencies": {
